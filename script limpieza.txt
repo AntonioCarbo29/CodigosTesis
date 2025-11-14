@@ -1,5 +1,5 @@
 # ===========================================================
-# 🧼 LIMPIEZA Y REEMPLAZO FINAL PARA POWER BI
+#  LIMPIEZA Y REEMPLAZO FINAL PARA POWER BI
 # Autor: Antonio Carbo León
 # Descripción:
 # Limpieza general, reemplazo "Otro" → "Privada" en Institución educativa
@@ -33,7 +33,7 @@ if ("Institución educativa" %in% names(DatosLimpios)) {
     DatosLimpios$`Institucion educativa`
   )
 } else {
-  print("⚠️ No se encontró la columna 'Institución educativa'")
+  print("No se encontró la columna 'Institución educativa'")
 }
 
 # --- 4. Reemplazo en la columna Edad ("Otro" -> "16") (versión corregida) ---
@@ -42,7 +42,7 @@ col_edad <- names(DatosLimpios)[
 ]
 
 if (length(col_edad) == 0) {
-  print("⚠️ No se encontró la columna 'Edad'")
+  print("No se encontró la columna 'Edad'")
 } else {
   v <- DatosLimpios[[col_edad]]
   v <- str_replace_all(v, "[\\r\\n]", " ")      # eliminar saltos de línea
@@ -55,3 +55,4 @@ if (length(col_edad) == 0) {
 
 # --- 5. Devolver dataset limpio ---
 DatosLimpios
+

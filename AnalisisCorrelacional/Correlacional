@@ -1,0 +1,25 @@
+# 1. Directorio de trabajo
+setwd("C:/Users/Admin/Desktop/CARPETA TESIS FINAL  Antonio Carbo")
+
+# 2. Cargar librería
+library(readxl)
+
+# 3. Cargar datos
+df <- read_excel("DatoslimpiosAntonioC.xlsx")
+
+# 4. Tabla de contingencia
+tab <- table(df$Género,
+             df$`¿Qué asignaturas disfrutas más en el colegio?`)
+tab
+
+# 5. Chi-cuadrado de independencia
+chi <- chisq.test(tab)
+chi
+
+# 6. Coeficiente de contingencia
+coef_contingencia <- sqrt(chi$statistic / (chi$statistic + sum(tab)))
+coef_contingencia
+
+# 7. V de Cramer
+V_cramer <- sqrt(chi$statistic / (sum(tab) * (min(dim(tab)) - 1)))
+V_cramer

@@ -1,0 +1,164 @@
+# ============================================================
+# FRECUENCIAS Y PORCENTAJES
+# - SIMPLE: % enteros que SUMAN EXACTAMENTE 100
+# - MULTI (;): % enteros (también suma 100) con Total = suma selecciones
+# - Imprime en consola
+# - Exporta a Excel (Tablas_Frecuencias_Tesis.xlsx)
+# - Hojas: Tabla_1, Tabla_2, ...
+# ============================================================
+
+# ---- 1) Paquetes ----
+packs <- c("readxl","dplyr","tidyr","stringr","janitor","openxlsx","tibble")
+inst <- setdiff(packs, rownames(installed.packages()))
+if(length(inst) > 0) install.packages(inst)
+
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(janitor)
+library(openxlsx)
+library(tibble)
+
+# ---- 2) Ruta del archivo ----
+ruta <- "C:/Users/Admin/Desktop/CARPETA TESIS FINAL  Antonio Carbo/ValoresObtenidosLimpios.xlsx"
+
+# ---- 3) Leer datos (primera hoja) ----
+hojas <- excel_sheets(ruta)
+datos_raw <- read_excel(ruta, sheet = hojas[1])
+
+# Guardar nombres originales (para mostrar)
+nombres_originales <- names(datos_raw)
+
+# Limpiar nombres para procesar sin errores
+datos <- datos_raw %>% clean_names()
+
+# Diccionario: limpio -> original
+dicc <- tibble(col_clean = names(datos), col_original = nombres_originales)
+
+# ---- 4) Función de % que suma EXACTAMENTE 100 (enteros) ----
+# largest remainder method
+porcentaje_100 <- function(frec){
+  frec <- as.numeric(frec)
+  total <- sum(frec)
+  if(total == 0) return(rep(0, length(frec)))
+
+  exact <- frec / total * 100
+  base <- floor(exact)
+  resto <- exact - base
+
+  # Cuántos puntos faltan para llegar a 100
+  faltan <- 100 - sum(base)
+
+  if(faltan > 0){
+    # sumar 1 a los mayores restos
+    idx <- order(resto, decreasing = TRUE)
+    base[idx[seq_len(faltan)]] <- base[idx[seq_len(faltan)]] + 1
+  } else if(faltan < 0){
+    # quitar 1 a los menores restos (por seguridad)
+    sobran <- abs(faltan)
+    idx <- order(resto, decreasing = FALSE)
+    base[idx[seq_len(sobran)]] <- pmax(0, base[idx[seq_len(sobran)]] - 1)
+  }
+
+  base
+}
+
+# ---- 5) Detecta MULTI si tiene ";" ----
+es_multi <- function(vec){
+  x <- as.character(vec)
+  x <- x[!is.na(x)]
+  if(length(x) == 0) return(FALSE)
+  mean(str_detect(x, ";")) >= 0.10
+}
+
+# ---- 6) Tabla SIMPLE (una respuesta) -> % suma 100 ----
+tabla_simple <- function(vec, nombre_col){
+  tab <- tibble(resp = as.character(vec)) %>%
+    mutate(resp = str_squish(resp),
+           resp = na_if(resp, "")) %>%
+    filter(!is.na(resp)) %>%
+    count(resp, name = "Frecuencia") %>%
+    arrange(desc(Frecuencia))
+
+  tab$`%` <- porcentaje_100(tab$Frecuencia)
+
+  tab %>%
+    rename(!!nombre_col := resp) %>%
+    janitor::adorn_totals("row") %>%
+    mutate(`%` = ifelse(!!sym(nombre_col) == "Total", 100, `%`))
+}
+
+# ---- 7) Tabla MULTI (separada por ";") -> % suma 100, Total = suma selecciones ----
+tabla_multi <- function(vec, nombre_col){
+  tab <- tibble(raw = as.character(vec)) %>%
+    mutate(raw = str_squish(raw),
+           raw = na_if(raw, "")) %>%
+    filter(!is.na(raw)) %>%
+    separate_rows(raw, sep = ";") %>%
+    mutate(raw = str_squish(raw),
+           raw = na_if(raw, "")) %>%
+    filter(!is.na(raw)) %>%
+    count(raw, name = "Frecuencia") %>%
+    arrange(desc(Frecuencia))
+
+  tab$`%` <- porcentaje_100(tab$Frecuencia)
+
+  tab %>%
+    rename(!!nombre_col := raw) %>%
+    janitor::adorn_totals("row") %>%
+    mutate(`%` = ifelse(!!sym(nombre_col) == "Total", 100, `%`))
+}
+
+# ---- 8) Generar tablas + imprimir ----
+resultados <- list()
+resumen_hojas <- tibble(Tabla = character(0), Variable = character(0), Tipo = character(0))
+
+for(col in names(datos)){
+
+  nombre_original <- dicc$col_original[dicc$col_clean == col]
+
+  if(es_multi(datos[[col]])){
+    tab <- tabla_multi(datos[[col]], nombre_original)
+    tipo <- "MULTI (;)"
+  } else {
+    tab <- tabla_simple(datos[[col]], nombre_original)
+    tipo <- "SIMPLE (%=100)"
+  }
+
+  resultados[[col]] <- tab
+
+  # Imprimir
+  cat("\n====================================================\n")
+  cat("VARIABLE:", nombre_original, " | TIPO:", tipo, "\n")
+  cat("====================================================\n")
+  print(tab, n = nrow(tab))
+
+  resumen_hojas <- bind_rows(resumen_hojas,
+                            tibble(Tabla = NA_character_, Variable = nombre_original, Tipo = tipo))
+}
+
+# ---- 9) Exportar a Excel (sin errores por nombres largos) ----
+salida <- file.path(dirname(ruta), "Tablas_Frecuencias_Tesis.xlsx")
+
+wb <- createWorkbook()
+
+# Hoja resumen primero
+addWorksheet(wb, "Resumen")
+
+i <- 1
+for(col in names(resultados)){
+  hoja <- paste0("Tabla_", i)
+  addWorksheet(wb, hoja)
+  writeData(wb, sheet = hoja, x = resultados[[col]])
+
+  resumen_hojas$Tabla[i] <- hoja
+  i <- i + 1
+}
+
+writeData(wb, sheet = "Resumen", x = resumen_hojas)
+
+saveWorkbook(wb, salida, overwrite = TRUE)
+
+cat("\nEXCEL CREADO EN:\n", salida, "\n")
+cat("En la hoja 'Resumen' ves qué variable está en cada Tabla_n.\n")

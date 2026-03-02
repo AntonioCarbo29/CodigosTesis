@@ -1,1 +1,22 @@
+setwd("C:/Users/Admin/Desktop/CARPETA TESIS FINAL  Antonio Carbo")
+library(readxl)
+
+df <- read_excel("DatoslimpiosAntonioC.xlsx")
+
+# Tabla EXACTA como tu captura
+tab <- table(df$Género,
+             df$`¿Qué sectores te interesan más para trabajar en el futuro?`)
+tab
+
+# Chi-cuadrado
+chi <- chisq.test(tab)
+chi
+
+# Coeficiente de contingencia
+coef_contingencia <- sqrt(chi$statistic / (chi$statistic + sum(tab)))
+coef_contingencia
+
+# V de Cramer
+V_cramer <- sqrt(chi$statistic / (sum(tab) * (min(dim(tab)) - 1)))
+V_cramer
 

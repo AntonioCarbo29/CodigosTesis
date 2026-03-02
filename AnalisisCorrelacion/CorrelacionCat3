@@ -1,1 +1,26 @@
+# Directorio
+setwd("C:/Users/Admin/Desktop/CARPETA TESIS FINAL  Antonio Carbo")
+
+# Cargar datos
+library(readxl)
+df <- read_excel("DatoslimpiosAntonioC.xlsx")
+
+# TABLA: Área de residencia vs Carrera atractiva
+tab <- table(
+  df$`Área de residencia`,
+  df$`¿Cuál de las siguientes carreras te parece más atractiva?`
+)
+tab
+
+# Chi-cuadrado
+chi <- chisq.test(tab)
+chi
+
+# Coeficiente de contingencia
+coef_contingencia <- sqrt(chi$statistic / (chi$statistic + sum(tab)))
+coef_contingencia
+
+# V de Cramer
+V_cramer <- sqrt(chi$statistic / (sum(tab) * (min(dim(tab)) - 1)))
+V_cramer
 

@@ -3,7 +3,7 @@ setwd("C:/Users/Admin/Desktop/CARPETA TESIS FINAL  Antonio Carbo")
 
 # Cargar datos
 library(readxl)
-df <- read_excel("DatoslimpiosAntonioC.xlsx")
+df <- read_excel("ValoresObtenidosLimpios.xlsx")
 
 # TABLA: Área de residencia vs Carrera atractiva
 tab <- table(
@@ -23,4 +23,3 @@ coef_contingencia
 # V de Cramer
 V_cramer <- sqrt(chi$statistic / (sum(tab) * (min(dim(tab)) - 1)))
 V_cramer
-

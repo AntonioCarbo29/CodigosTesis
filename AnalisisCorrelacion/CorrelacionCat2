@@ -1,7 +1,7 @@
 setwd("C:/Users/Admin/Desktop/CARPETA TESIS FINAL  Antonio Carbo")
 library(readxl)
 
-df <- read_excel("DatoslimpiosAntonioC.xlsx")
+df <- read_excel("ValoresObtenidosLimpios.xlsx")
 
 # Tabla EXACTA como tu captura
 tab <- table(df$Género,
@@ -19,4 +19,3 @@ coef_contingencia
 # V de Cramer
 V_cramer <- sqrt(chi$statistic / (sum(tab) * (min(dim(tab)) - 1)))
 V_cramer
-
